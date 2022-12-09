@@ -53,10 +53,8 @@ services:
     expose:
       - 8080
     labels:
-      traefik.enable: "true"
-      traefik.http.routers.xwiki.entryPoints: web
-      traefik.http.routers.xwiki.tls.certResolver: default
-      traefik.http.routers.xwiki.rule: Host(`wiki.example.com`)
+      caddy: wiki.internetapi.cn
+      caddy.reverse_proxy: '{{upstreams 8080}}'
 
   # The container that runs PostgreSQL
   db:

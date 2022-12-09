@@ -42,16 +42,15 @@ RUN apt-get update && \
     curl \
     libreoffice \
     unzip \
-    procps \
-    libpostgresql-jdbc-java && \
+    procps && \
   rm -rf /var/lib/apt/lists/*
 
 # Install XWiki as the ROOT webapp context in Tomcat
 # Create the Tomcat temporary directory
 # Configure the XWiki permanent directory
-ENV XWIKI_VERSION="13.10.10"
+ENV XWIKI_VERSION="14.10"
 ENV XWIKI_URL_PREFIX "https://maven.xwiki.org/releases/org/xwiki/platform/xwiki-platform-distribution-war/${XWIKI_VERSION}"
-ENV XWIKI_DOWNLOAD_SHA256 bae87a16d291d321d0848fcba55e455bfcd4b1890597cd9b735d98013cf44bad
+ENV XWIKI_DOWNLOAD_SHA256 5e412e550c31255de1500631d9dcf46f7d746e6758717f63a90fa5c807429937
 RUN rm -rf /usr/local/tomcat/webapps/* && \
   mkdir -p /usr/local/tomcat/temp && \
   mkdir -p /usr/local/xwiki/data && \
@@ -61,7 +60,15 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
   rm -f xwiki.war
 
 # Copy the JDBC driver in the XWiki webapp
-RUN cp /usr/share/java/postgresql-jdbc4.jar /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/
+# For MYSQL, download the MySQL driver version from the Maven Central repository since there's no up to 
+# date Debian repository for it anymore.
+ENV MYSQL_JDBC_VERSION="8.0.31"
+ENV MYSQL_JDBC_SHA256="5249e3dc6d6531b37790e3f61845b96db5e41e891d3d8edb0e2e3a1b53ca2f4f"
+ENV MYSQL_JDBC_PREFIX="https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/${MYSQL_JDBC_VERSION}"
+ENV MYSQL_JDBC_ARTIFACT="mysql-connector-j-${MYSQL_JDBC_VERSION}.jar"
+ENV MYSQL_JDBC_TARGET="/usr/local/tomcat/webapps/ROOT/WEB-INF/lib/${MYSQL_JDBC_ARTIFACT}"
+RUN curl -fSL "${MYSQL_JDBC_PREFIX}/${MYSQL_JDBC_ARTIFACT}" -o $MYSQL_JDBC_TARGET && \
+  echo "$MYSQL_JDBC_SHA256 $MYSQL_JDBC_TARGET" | sha256sum -c -
 
 # Configure Tomcat. For example set the memory for the Tomcat JVM since the default value is too small for XWiki
 COPY tomcat/setenv.sh /usr/local/tomcat/bin/

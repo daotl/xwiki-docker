@@ -22,48 +22,52 @@ networks:
   bridge:
     driver: bridge
 services:
+  # The container that runs XWiki + Tomcat
   web:
-    # Use an already built XWiki image from DockerHub.
-    image: "xwiki:lts-mysql-tomcat"
-    container_name: xwiki-mysql-tomcat-web
+    build: .
+    container_name: xwiki-mariadb-tomcat-web
     depends_on:
       - db
     ports:
       - "8080:8080"
-    # The DB_USER/DB_PASSWORD/DB_HOST variables are used in the hibernate.cfg.xml file.
+    # Default values defined in .env file.
+    # The DB_USER/DB_PASSWORD/DB_DATABASE/DB_HOST variables are used in the hibernate.cfg.xml file.
     environment:
-      - DB_USER=xwiki
-      - DB_PASSWORD=xwiki
-      - DB_DATABASE=xwiki
-      - DB_HOST=xwiki-mysql-db
-    # Provide a name instead of an auto-generated id for the xwiki permanent directory configured in the Dockerfile,
-    # to make it simpler to identify in 'docker volume ls'.
+      - XWIKI_VERSION=${XWIKI_VERSION}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_HOST=xwiki-mariadb-db
+    # Provide a name instead of an auto-generated id for xwiki data (the permanent directory in included in it)
+    # configured in the Dockerfile, to make it simpler to identify in 'docker volume ls'.
     volumes:
       - xwiki-data:/usr/local/xwiki
     networks:
       - bridge
-  # The container that runs MySQL
+  # The container that runs the database (mariadb)
   db:
-    image: "mysql:5.7"
-    container_name: xwiki-mysql-db
+    image: "mariadb:10.5"
+    container_name: xwiki-mariadb-db
     # - We provide a xwiki.cnf file in order to configure the mysql db to support UTF8 and be case-insensitive
     # We have to do it here since we use an existing image and that's how this image allows customizations.
-    # See https://hub.docker.com/_/mysql/ for more details.
-    # - Provide a name instead of an auto-generated id for the mysql data, to make it simpler to identify in
+    # See https://hub.docker.com/_/mariadb/ for more details.
+    # - Provide a name instead of an auto-generated id for the mariadb data, to make it simpler to identify in
     # 'docker volume ls'
     volumes:
-      - ./xwiki.cnf:/etc/mysql/conf.d/xwiki.cnf
-      - mysql-data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    # Configure the MySQL database and create a user with provided name/password.
-    # See https://hub.docker.com/_/mysql/ for more details.
+      - ./mariadb/xwiki.cnf:/etc/mysql/conf.d/xwiki.cnf
+      - mariadb-data:/var/lib/mysql
+      - ./mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    # Configure the MariaDB database and create a user with provided name/password.
+    # See https://hub.docker.com/_/mariadb/ for more details.
+    # Default values defined in .env file.
     environment:
-      - MYSQL_ROOT_PASSWORD=xwiki
-      - MYSQL_USER=xwiki
-      - MYSQL_PASSWORD=xwiki
-      - MYSQL_DATABASE=xwiki
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_DATABASE}
     networks:
       - bridge
 volumes:
-  mysql-data: {}
+  mariadb-data: {}
   xwiki-data: {}

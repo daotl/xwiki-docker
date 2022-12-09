@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 # ---------------------------------------------------------------------------
-FROM tomcat:9
+FROM tomcat:9-jre11
 
 #    ____  ____  ____      ____  _   __        _
 #   |_  _||_  _||_  _|    |_  _|(_) [  |  _   (_)
@@ -26,7 +26,12 @@ FROM tomcat:9
 #    _/ /'`\ \_     \  /\  /    | |  | |`\ \  | |
 #   |____||____|     \/  \/    [___][__|  \_][___]
 
-MAINTAINER XWiki Committers
+LABEL org.opencontainers.image.authors='XWiki Development Team <committers@xwiki.org>'
+LABEL org.opencontainers.image.url='https://hub.docker.com/_/xwiki'
+LABEL org.opencontainers.image.documentation='https://hub.docker.com/_/xwiki'
+LABEL org.opencontainers.image.source='https://github.com/xwiki/xwiki-docker.git'
+LABEL org.opencontainers.image.vendor='xwiki.org'
+LABEL org.opencontainers.image.licenses='LGPL-2.1'
 
 # Note: when using docker-compose, the ENV values below are overridden from the .env file.
 
@@ -43,9 +48,9 @@ RUN apt-get update && \
 # Install XWiki as the ROOT webapp context in Tomcat
 # Create the Tomcat temporary directory
 # Configure the XWiki permanent directory
-ENV XWIKI_VERSION="12.10.10"
+ENV XWIKI_VERSION="14.10"
 ENV XWIKI_URL_PREFIX "https://maven.xwiki.org/releases/org/xwiki/platform/xwiki-platform-distribution-war/${XWIKI_VERSION}"
-ENV XWIKI_DOWNLOAD_SHA256 42364fd6a3d575c78969ebb12a7d28360ccff3b478379cf30232d6611ccbe9e0
+ENV XWIKI_DOWNLOAD_SHA256 5e412e550c31255de1500631d9dcf46f7d746e6758717f63a90fa5c807429937
 RUN rm -rf /usr/local/tomcat/webapps/* && \
   mkdir -p /usr/local/tomcat/temp && \
   mkdir -p /usr/local/xwiki/data && \
@@ -55,15 +60,15 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
   rm -f xwiki.war
 
 # Copy the JDBC driver in the XWiki webapp
-# For MYSQL, download the MySQL driver version from the Maven Central repository since there's no up to 
-# date Debian repository for it anymore.
-ENV MYSQL_JDBC_VERSION="8.0.22"
-ENV MYSQL_JDBC_SHA256="5019defbd12316295e97a6e88f2a9b07f118345a4e982710bba232e499b22f4f"
-ENV MYSQL_JDBC_PREFIX="https://repo1.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_JDBC_VERSION}"
-ENV MYSQL_JDBC_ARTIFACT="mysql-connector-java-${MYSQL_JDBC_VERSION}.jar"
-ENV MYSQL_JDBC_TARGET="/usr/local/tomcat/webapps/ROOT/WEB-INF/lib/${MYSQL_JDBC_ARTIFACT}"
-RUN curl -fSL "${MYSQL_JDBC_PREFIX}/${MYSQL_JDBC_ARTIFACT}" -o $MYSQL_JDBC_TARGET && \
-  echo "$MYSQL_JDBC_SHA256 $MYSQL_JDBC_TARGET" | sha256sum -c -
+# For MariaDB, download the MariaDB driver version from the Maven Central repository to control the version 
+# used.
+ENV MARIADB_JDBC_VERSION="3.0.9"
+ENV MARIADB_JDBC_SHA256="2a004c8ab43173a2a0d10d25aadfc57b8012fe1f68bbd816196df814b5000c1a"
+ENV MARIADB_JDBC_PREFIX="https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/${MARIADB_JDBC_VERSION}"
+ENV MARIADB_JDBC_ARTIFACT="mariadb-java-client-${MARIADB_JDBC_VERSION}.jar"
+ENV MARIADB_JDBC_TARGET="/usr/local/tomcat/webapps/ROOT/WEB-INF/lib/${MARIADB_JDBC_ARTIFACT}"
+RUN curl -fSL "${MARIADB_JDBC_PREFIX}/${MARIADB_JDBC_ARTIFACT}" -o $MARIADB_JDBC_TARGET && \
+  echo "$MARIADB_JDBC_SHA256 $MARIADB_JDBC_TARGET" | sha256sum -c -
 
 # Configure Tomcat. For example set the memory for the Tomcat JVM since the default value is too small for XWiki
 COPY tomcat/setenv.sh /usr/local/tomcat/bin/

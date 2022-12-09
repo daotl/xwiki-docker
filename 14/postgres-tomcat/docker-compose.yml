@@ -26,21 +26,25 @@ networks:
     external: true
 
 services:
-
+  # The container that runs XWiki + Tomcat
   web:
     # Use an already built XWiki image from DockerHub.
-    image: "xwiki:13.9-postgres-tomcat"
+    image: "xwiki:14.10-postgres-tomcat"
     container_name: xwiki
     depends_on:
       - db
-    # The DB_USER/DB_PASSWORD/DB_HOST variables are used in the hibernate.cfg.xml file.
+    # ports:
+    #   - "8080:8080"
+    # Default values defined in .env file.
+    # The DB_USER/DB_PASSWORD/DB_DATABASE/DB_HOST variables are used in the hibernate.cfg.xml file.
     environment:
-      - DB_USER=xwiki
-      - DB_PASSWORD=xwiki
-      - DB_DATABASE=xwiki
+      - XWIKI_VERSION=${XWIKI_VERSION}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
       - DB_HOST=xwiki-postgres-db
-    # Provide a name instead of an auto-generated id for the xwiki permanent directory configured in the Dockerfile,
-    # to make it simpler to identify in 'docker volume ls'.
+    # Provide a name instead of an auto-generated id for xwiki data (the permanent directory in included in it)
+    # configured in the Dockerfile, to make it simpler to identify in 'docker volume ls'.
     volumes:
       - xwiki-data:/usr/local/xwiki
     networks:
@@ -56,15 +60,15 @@ services:
 
   # The container that runs PostgreSQL
   db:
-    image: "postgres:13.5-alpine"
+    image: "postgres:13-alpine"
     container_name: xwiki-postgres-db
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_ROOT_PASSWORD=xwiki
-      - POSTGRES_PASSWORD=xwiki
-      - POSTGRES_USER=xwiki
-      - POSTGRES_DB=xwiki
+      - POSTGRES_ROOT_PASSWORD=${POSTGRES_ROOT_PASSWORD}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_DATABASE}
       - POSTGRES_INITDB_ARGS="--encoding=UTF8"
     networks:
       - bridge

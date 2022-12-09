@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 # ---------------------------------------------------------------------------
-FROM tomcat:9
+FROM tomcat:9-jre11
 
 #    ____  ____  ____      ____  _   __        _
 #   |_  _||_  _||_  _|    |_  _|(_) [  |  _   (_)
@@ -26,7 +26,12 @@ FROM tomcat:9
 #    _/ /'`\ \_     \  /\  /    | |  | |`\ \  | |
 #   |____||____|     \/  \/    [___][__|  \_][___]
 
-MAINTAINER XWiki Committers
+LABEL org.opencontainers.image.authors='XWiki Development Team <committers@xwiki.org>'
+LABEL org.opencontainers.image.url='https://hub.docker.com/_/xwiki'
+LABEL org.opencontainers.image.documentation='https://hub.docker.com/_/xwiki'
+LABEL org.opencontainers.image.source='https://github.com/xwiki/xwiki-docker.git'
+LABEL org.opencontainers.image.vendor='xwiki.org'
+LABEL org.opencontainers.image.licenses='LGPL-2.1'
 
 # Note: when using docker-compose, the ENV values below are overridden from the .env file.
 
@@ -43,9 +48,9 @@ RUN apt-get update && \
 # Install XWiki as the ROOT webapp context in Tomcat
 # Create the Tomcat temporary directory
 # Configure the XWiki permanent directory
-ENV XWIKI_VERSION="13.9"
+ENV XWIKI_VERSION="13.10.10"
 ENV XWIKI_URL_PREFIX "https://maven.xwiki.org/releases/org/xwiki/platform/xwiki-platform-distribution-war/${XWIKI_VERSION}"
-ENV XWIKI_DOWNLOAD_SHA256 f60b7994b3dcaf6080032b854a4bf3cfcbe91cb669992397197e11256e742a3c
+ENV XWIKI_DOWNLOAD_SHA256 bae87a16d291d321d0848fcba55e455bfcd4b1890597cd9b735d98013cf44bad
 RUN rm -rf /usr/local/tomcat/webapps/* && \
   mkdir -p /usr/local/tomcat/temp && \
   mkdir -p /usr/local/xwiki/data && \
@@ -57,10 +62,10 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
 # Copy the JDBC driver in the XWiki webapp
 # For MYSQL, download the MySQL driver version from the Maven Central repository since there's no up to 
 # date Debian repository for it anymore.
-ENV MYSQL_JDBC_VERSION="8.0.22"
-ENV MYSQL_JDBC_SHA256="5019defbd12316295e97a6e88f2a9b07f118345a4e982710bba232e499b22f4f"
-ENV MYSQL_JDBC_PREFIX="https://repo1.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_JDBC_VERSION}"
-ENV MYSQL_JDBC_ARTIFACT="mysql-connector-java-${MYSQL_JDBC_VERSION}.jar"
+ENV MYSQL_JDBC_VERSION="8.0.31"
+ENV MYSQL_JDBC_SHA256="5249e3dc6d6531b37790e3f61845b96db5e41e891d3d8edb0e2e3a1b53ca2f4f"
+ENV MYSQL_JDBC_PREFIX="https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/${MYSQL_JDBC_VERSION}"
+ENV MYSQL_JDBC_ARTIFACT="mysql-connector-j-${MYSQL_JDBC_VERSION}.jar"
 ENV MYSQL_JDBC_TARGET="/usr/local/tomcat/webapps/ROOT/WEB-INF/lib/${MYSQL_JDBC_ARTIFACT}"
 RUN curl -fSL "${MYSQL_JDBC_PREFIX}/${MYSQL_JDBC_ARTIFACT}" -o $MYSQL_JDBC_TARGET && \
   echo "$MYSQL_JDBC_SHA256 $MYSQL_JDBC_TARGET" | sha256sum -c -

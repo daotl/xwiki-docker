@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 # ---------------------------------------------------------------------------
-FROM tomcat:9
+FROM tomcat:9-jre11
 
 #    ____  ____  ____      ____  _   __        _
 #   |_  _||_  _||_  _|    |_  _|(_) [  |  _   (_)
@@ -26,7 +26,12 @@ FROM tomcat:9
 #    _/ /'`\\ \\_     \\  /\\  /    | |  | |`\\ \\  | |
 #   |____||____|     \\/  \\/    [___][__|  \\_][___]
 
-LABEL maintainer="XWiki Development Team <committers@xwiki.org>"
+LABEL org.opencontainers.image.authors='XWiki Development Team <committers@xwiki.org>'
+LABEL org.opencontainers.image.url='https://hub.docker.com/_/xwiki'
+LABEL org.opencontainers.image.documentation='https://hub.docker.com/_/xwiki'
+LABEL org.opencontainers.image.source='https://github.com/xwiki/xwiki-docker.git'
+LABEL org.opencontainers.image.vendor='xwiki.org'
+LABEL org.opencontainers.image.licenses='LGPL-2.1'
 
 # Note: when using docker-compose, the ENV values below are overridden from the .env file.
 
@@ -58,17 +63,23 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \\
 <% if (db == 'mysql') {
   println "# For MYSQL, download the MySQL driver version from the Maven Central repository since there's no up to "
   println "# date Debian repository for it anymore."
-  // Note: We currently cannot uprgade to 8.0.23 since we need all XWiki supported branches to have upgraded to
-  // liquibase 4.3.2 before we can upgrade, see https://jira.xwiki.org/browse/XWIKI-18515
-  println "ENV MYSQL_JDBC_VERSION=\"8.0.22\""
-  // Get the SHA256 from the JAR at https://search.maven.org/artifact/mysql/mysql-connector-java and using the
-  // command line defined in build.gradle.
-  println "ENV MYSQL_JDBC_SHA256=\"5019defbd12316295e97a6e88f2a9b07f118345a4e982710bba232e499b22f4f\""
-  println "ENV MYSQL_JDBC_PREFIX=\"https://repo1.maven.org/maven2/mysql/mysql-connector-java/\${MYSQL_JDBC_VERSION}\""
-  println "ENV MYSQL_JDBC_ARTIFACT=\"mysql-connector-java-\${MYSQL_JDBC_VERSION}.jar\""
+  println "ENV MYSQL_JDBC_VERSION=\"$mysqlJDBCVersion\""
+  println "ENV MYSQL_JDBC_SHA256=\"$mysqlJDBCSha256\""
+  println "ENV MYSQL_JDBC_PREFIX=\"https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/\${MYSQL_JDBC_VERSION}\""
+  println "ENV MYSQL_JDBC_ARTIFACT=\"mysql-connector-j-\${MYSQL_JDBC_VERSION}.jar\""
   println "ENV MYSQL_JDBC_TARGET=\"/usr/local/tomcat/webapps/ROOT/WEB-INF/lib/\${MYSQL_JDBC_ARTIFACT}\""
   println "RUN curl -fSL \"\${MYSQL_JDBC_PREFIX}/\${MYSQL_JDBC_ARTIFACT}\" -o \$MYSQL_JDBC_TARGET && \\"
   print "  echo \"\$MYSQL_JDBC_SHA256 \$MYSQL_JDBC_TARGET\" | sha256sum -c -"
+} else if (db == 'mariadb') {
+  println "# For MariaDB, download the MariaDB driver version from the Maven Central repository to control the version "
+  println "# used."
+  println "ENV MARIADB_JDBC_VERSION=\"$mariadbJDBCVersion\""
+  println "ENV MARIADB_JDBC_SHA256=\"$mariadbJDBCSha256\""
+  println "ENV MARIADB_JDBC_PREFIX=\"https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/\${MARIADB_JDBC_VERSION}\""
+  println "ENV MARIADB_JDBC_ARTIFACT=\"mariadb-java-client-\${MARIADB_JDBC_VERSION}.jar\""
+  println "ENV MARIADB_JDBC_TARGET=\"/usr/local/tomcat/webapps/ROOT/WEB-INF/lib/\${MARIADB_JDBC_ARTIFACT}\""
+  println "RUN curl -fSL \"\${MARIADB_JDBC_PREFIX}/\${MARIADB_JDBC_ARTIFACT}\" -o \$MARIADB_JDBC_TARGET && \\"
+  print "  echo \"\$MARIADB_JDBC_SHA256 \$MARIADB_JDBC_TARGET\" | sha256sum -c -"
 } else if (db == 'postgres') {
   print 'RUN cp /usr/share/java/postgresql-jdbc4.jar /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/'
 } %>

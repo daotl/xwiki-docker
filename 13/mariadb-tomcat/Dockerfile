@@ -42,8 +42,7 @@ RUN apt-get update && \
     curl \
     libreoffice \
     unzip \
-    procps \
-    libpostgresql-jdbc-java && \
+    procps && \
   rm -rf /var/lib/apt/lists/*
 
 # Install XWiki as the ROOT webapp context in Tomcat
@@ -61,7 +60,15 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
   rm -f xwiki.war
 
 # Copy the JDBC driver in the XWiki webapp
-RUN cp /usr/share/java/postgresql-jdbc4.jar /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/
+# For MariaDB, download the MariaDB driver version from the Maven Central repository to control the version 
+# used.
+ENV MARIADB_JDBC_VERSION="3.0.9"
+ENV MARIADB_JDBC_SHA256="2a004c8ab43173a2a0d10d25aadfc57b8012fe1f68bbd816196df814b5000c1a"
+ENV MARIADB_JDBC_PREFIX="https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/${MARIADB_JDBC_VERSION}"
+ENV MARIADB_JDBC_ARTIFACT="mariadb-java-client-${MARIADB_JDBC_VERSION}.jar"
+ENV MARIADB_JDBC_TARGET="/usr/local/tomcat/webapps/ROOT/WEB-INF/lib/${MARIADB_JDBC_ARTIFACT}"
+RUN curl -fSL "${MARIADB_JDBC_PREFIX}/${MARIADB_JDBC_ARTIFACT}" -o $MARIADB_JDBC_TARGET && \
+  echo "$MARIADB_JDBC_SHA256 $MARIADB_JDBC_TARGET" | sha256sum -c -
 
 # Configure Tomcat. For example set the memory for the Tomcat JVM since the default value is too small for XWiki
 COPY tomcat/setenv.sh /usr/local/tomcat/bin/

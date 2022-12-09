@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 # ---------------------------------------------------------------------------
-FROM tomcat:9
+FROM tomcat:9-jre11
 
 #    ____  ____  ____      ____  _   __        _
 #   |_  _||_  _||_  _|    |_  _|(_) [  |  _   (_)
@@ -26,7 +26,12 @@ FROM tomcat:9
 #    _/ /'`\ \_     \  /\  /    | |  | |`\ \  | |
 #   |____||____|     \/  \/    [___][__|  \_][___]
 
-MAINTAINER XWiki Committers
+LABEL org.opencontainers.image.authors='XWiki Development Team <committers@xwiki.org>'
+LABEL org.opencontainers.image.url='https://hub.docker.com/_/xwiki'
+LABEL org.opencontainers.image.documentation='https://hub.docker.com/_/xwiki'
+LABEL org.opencontainers.image.source='https://github.com/xwiki/xwiki-docker.git'
+LABEL org.opencontainers.image.vendor='xwiki.org'
+LABEL org.opencontainers.image.licenses='LGPL-2.1'
 
 # Note: when using docker-compose, the ENV values below are overridden from the .env file.
 
@@ -44,9 +49,9 @@ RUN apt-get update && \
 # Install XWiki as the ROOT webapp context in Tomcat
 # Create the Tomcat temporary directory
 # Configure the XWiki permanent directory
-ENV XWIKI_VERSION="12.10.10"
+ENV XWIKI_VERSION="14.10"
 ENV XWIKI_URL_PREFIX "https://maven.xwiki.org/releases/org/xwiki/platform/xwiki-platform-distribution-war/${XWIKI_VERSION}"
-ENV XWIKI_DOWNLOAD_SHA256 42364fd6a3d575c78969ebb12a7d28360ccff3b478379cf30232d6611ccbe9e0
+ENV XWIKI_DOWNLOAD_SHA256 5e412e550c31255de1500631d9dcf46f7d746e6758717f63a90fa5c807429937
 RUN rm -rf /usr/local/tomcat/webapps/* && \
   mkdir -p /usr/local/tomcat/temp && \
   mkdir -p /usr/local/xwiki/data && \

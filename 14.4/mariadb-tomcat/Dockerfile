@@ -42,16 +42,15 @@ RUN apt-get update && \
     curl \
     libreoffice \
     unzip \
-    procps \
-    libpostgresql-jdbc-java && \
+    procps && \
   rm -rf /var/lib/apt/lists/*
 
 # Install XWiki as the ROOT webapp context in Tomcat
 # Create the Tomcat temporary directory
 # Configure the XWiki permanent directory
-ENV XWIKI_VERSION="13.10.10"
+ENV XWIKI_VERSION="14.4.7"
 ENV XWIKI_URL_PREFIX "https://maven.xwiki.org/releases/org/xwiki/platform/xwiki-platform-distribution-war/${XWIKI_VERSION}"
-ENV XWIKI_DOWNLOAD_SHA256 bae87a16d291d321d0848fcba55e455bfcd4b1890597cd9b735d98013cf44bad
+ENV XWIKI_DOWNLOAD_SHA256 4545869f5e088c88401556f473edf356ff9e358652edd766d2588e8164ef68e0
 RUN rm -rf /usr/local/tomcat/webapps/* && \
   mkdir -p /usr/local/tomcat/temp && \
   mkdir -p /usr/local/xwiki/data && \
@@ -61,7 +60,15 @@ RUN rm -rf /usr/local/tomcat/webapps/* && \
   rm -f xwiki.war
 
 # Copy the JDBC driver in the XWiki webapp
-RUN cp /usr/share/java/postgresql-jdbc4.jar /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/
+# For MariaDB, download the MariaDB driver version from the Maven Central repository to control the version 
+# used.
+ENV MARIADB_JDBC_VERSION="3.0.9"
+ENV MARIADB_JDBC_SHA256="2a004c8ab43173a2a0d10d25aadfc57b8012fe1f68bbd816196df814b5000c1a"
+ENV MARIADB_JDBC_PREFIX="https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/${MARIADB_JDBC_VERSION}"
+ENV MARIADB_JDBC_ARTIFACT="mariadb-java-client-${MARIADB_JDBC_VERSION}.jar"
+ENV MARIADB_JDBC_TARGET="/usr/local/tomcat/webapps/ROOT/WEB-INF/lib/${MARIADB_JDBC_ARTIFACT}"
+RUN curl -fSL "${MARIADB_JDBC_PREFIX}/${MARIADB_JDBC_ARTIFACT}" -o $MARIADB_JDBC_TARGET && \
+  echo "$MARIADB_JDBC_SHA256 $MARIADB_JDBC_TARGET" | sha256sum -c -
 
 # Configure Tomcat. For example set the memory for the Tomcat JVM since the default value is too small for XWiki
 COPY tomcat/setenv.sh /usr/local/tomcat/bin/
